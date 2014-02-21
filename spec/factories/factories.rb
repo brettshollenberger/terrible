@@ -5,4 +5,9 @@ FactoryGirl.define do
     last "the Great One"
     password "foobar16"
   end
+
+  factory :project do
+    title "The first project"
+    description "A very good project"
+  end
 end
