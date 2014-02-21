@@ -3,7 +3,7 @@ include Warden::Test::Helpers
 module Requests
   module JsonHelpers
     def user
-      FactoryGirl.create(:user)
+      @user ||= FactoryGirl.create(:user, id: 1)
     end
 
     def login(user)

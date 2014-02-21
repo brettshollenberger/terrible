@@ -20,7 +20,7 @@ describe "Projects API" do
   describe "when logged in" do
     before(:each) do
       FactoryGirl.create_list(:project, 10)
-      FactoryGirl.create(:project, user: user)
+      FactoryGirl.create(:user_project_collaboration, collaborator: user)
       login(user)
       get "/api/v1/projects.json"
     end
@@ -30,7 +30,7 @@ describe "Projects API" do
     end
 
     it "responds with a list of projects" do
-      expect(json.length).to eq(10)
+      expect(json.length).to eq(1)
     end
   end
 end
