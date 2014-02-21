@@ -8,6 +8,6 @@ class Project < ActiveRecord::Base
   has_many :users,
     through: :collaboratorships,
     source: :collaborator,
-    source_type: :user
+    source_type: "User"
 
 end

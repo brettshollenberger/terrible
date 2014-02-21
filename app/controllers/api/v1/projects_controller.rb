@@ -5,8 +5,7 @@ module Api
       respond_to :json
 
       def index
-        @projects = current_user.collaboratables(:project)
-        respond_with(@projects)
+        respond_with(current_user.projects)
       end
     end
   end

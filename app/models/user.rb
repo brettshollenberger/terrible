@@ -14,5 +14,5 @@ class User < ActiveRecord::Base
   has_many :projects,
     through: :collaboratorships,
     source: :collaboratable,
-    source_type: :project
+    source_type: "Project"
 end
