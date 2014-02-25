@@ -10,10 +10,6 @@ module Requests
       login_as user, scope: :user
     end
 
-    def current_user
-      User.find(request.session[:user])
-    end
-
     def json
       @json ||= JSON.parse(response.body)
     end
