@@ -62,11 +62,11 @@ describe "Projects API" do
         get "/api/v1/projects/#{@project.id}.json"
       end
 
-      it "is a successful request" do
+      it "is not a successful request" do
         expect(response).to_not be_success
       end
 
-      it "responds with the user's project, provided they are a collaborator" do
+      it "returns an error message" do
         expect(json["message"]).to eql("You don't have permission to view that resource")
       end
     end
