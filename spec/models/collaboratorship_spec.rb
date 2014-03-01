@@ -31,11 +31,13 @@ describe Collaboratorship do
 
   describe "Defaults" do
     it "defaults role to member" do
-      expect(collaboratorship.role).to eql("member")
+      @collaboratorship = Collaboratorship.new
+      expect(@collaboratorship.role).to eql("collaborator")
     end
 
     it "defaults state to pending" do
-      expect(collaboratorship.state).to eql("pending")
+      @collaboratorship = Collaboratorship.new
+      expect(@collaboratorship.state).to eql("pending")
     end
   end
 end

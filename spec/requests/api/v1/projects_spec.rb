@@ -3,9 +3,12 @@ require 'spec_helper'
 describe "Projects API" do
 
   describe "index" do
+    before(:each) do
+      FactoryGirl.create_list(:project, 10)
+    end
+
     describe "when not logged in" do
       before(:each) do
-        FactoryGirl.create_list(:project, 10)
         get "/api/v1/projects.json"
       end
 
@@ -20,7 +23,6 @@ describe "Projects API" do
 
     describe "when logged in" do
       before(:each) do
-        FactoryGirl.create_list(:project, 10)
         FactoryGirl.create(:user_project_collaboration, collaborator: user)
         login(user)
         get "/api/v1/projects.json"
@@ -88,7 +90,6 @@ describe "Projects API" do
     end
 
     describe "when logged in" do
-
       before(:each) do
         login(user)
       end
@@ -96,6 +97,7 @@ describe "Projects API" do
       describe "when creating a valid project" do
         before(:each) do
           create_project(valid_project)
+          @project = Project.find(json["id"])
         end
 
         it "is a successful request" do
@@ -104,6 +106,18 @@ describe "Projects API" do
 
         it "renders the project" do
           expect(json["title"]).to eql("A great project")
+        end
+
+        it "creates a collaboratorship between user and project" do
+          expect(user.projects[0]).to eql(@project)
+        end
+
+        it "creates an active collaboratorship" do
+          expect(user.collaboratorship_for(@project).state).to eql("active")
+        end
+
+        it "makes the user the owner" do
+          expect(user.role_for(@project)).to eql("owner")
         end
       end
     end
@@ -124,7 +138,6 @@ describe "Projects API" do
   end
 
   describe "update" do
-    
     before(:each) do
       @upc = FactoryGirl.create(:user_project_collaboration, collaborator: user)
       @user2 = FactoryGirl.create(:user)

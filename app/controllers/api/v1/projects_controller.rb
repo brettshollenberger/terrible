@@ -26,7 +26,12 @@ module Api
           @project = current_user.projects.new
         end
 
-        if @project.save
+        @collaboratorship = Collaboratorship.new(collaborator: current_user,
+                                                 collaboratable: @project,
+                                                 role: "owner",
+                                                 state: "active")
+
+        if @project.save && @collaboratorship.save
           render :json => @project, status: :created, location: api_v1_project_url(@project)
         else
           render :json => @project.errors, status: :unprocessable_entity

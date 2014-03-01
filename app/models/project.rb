@@ -1,5 +1,7 @@
 class Project < ActiveRecord::Base
 
+  include Collaborations::Collaboratable
+
   after_initialize :defaults
 
   validates_presence_of :title

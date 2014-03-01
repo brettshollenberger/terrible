@@ -11,18 +11,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140221055522) do
+ActiveRecord::Schema.define(version: 20140301082742) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "collaboratorships", force: true do |t|
-    t.integer  "collaboratable_id",                       null: false
-    t.string   "collaboratable_type",                     null: false
-    t.integer  "collaborator_id",                         null: false
-    t.string   "collaborator_type",   default: "user",    null: false
-    t.string   "role",                default: "member",  null: false
-    t.string   "state",               default: "pending", null: false
+    t.integer  "collaboratable_id",                            null: false
+    t.string   "collaboratable_type",                          null: false
+    t.integer  "collaborator_id",                              null: false
+    t.string   "collaborator_type",   default: "user",         null: false
+    t.string   "role",                default: "collaborator", null: false
+    t.string   "state",               default: "pending",      null: false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
