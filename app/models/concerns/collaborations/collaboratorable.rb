@@ -23,6 +23,24 @@ module Collaborations
 
   private
 
+    # class MissingMethod
+    # 
+    # The MissingMethod class helps us to find missing methods. Since the method_missing
+    # method is particularly cumbersome with the number of generic methods the Collaboratorable
+    # concern can support, we're delegating to this class to simplify our code.
+    #
+    # We may be asking whether a collaborator contains a certain role for a given
+    # collaboratable, like:
+    #
+    #     current_user.owner?(@project)
+    #     current_user.collaborator?(@team)
+    #
+    # We may also be asking for a collaborator's collaboratables of a given state, like:
+    #
+    #     current_user.active_projects
+    #     current_user.pending_teams
+    #
+    # To find a missing method, we call MissingMethod.new.find
     class MissingMethod
       attr_accessor :method_name, :collaborator, :args
 
@@ -33,7 +51,7 @@ module Collaborations
       end
 
       def find
-        return role? if interrogating_role?
+        return role?           if interrogating_role?
         return collaboratables if looking_for_collaboratables?
       end
 
@@ -51,6 +69,7 @@ module Collaborations
         method_name_starts_with_state
       end
 
+      # E.g. active_teams calls blank_state_blank_collaboratable("active", "teams")
       def collaboratables
         blank_state_blank_collaboratable(method_pieces[0], 
                                          method_pieces[1])
@@ -73,6 +92,7 @@ module Collaborations
         method_pieces.length > 1
       end
 
+      # E.g. active_teams returns an array of Teams, not Collaboratorships
       def blank_state_blank_collaboratable(state, collaboratable)
         type = collaboratable.classify
         Collaboratorship.where(collaborator: @collaborator, 
