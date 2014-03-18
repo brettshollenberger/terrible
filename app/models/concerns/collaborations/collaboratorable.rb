@@ -98,7 +98,7 @@ module Collaborations
         Collaboratorship.where(collaborator: @collaborator, 
                                state: state, 
                                collaboratable_type: type)
-                                .map { |c| c.collaboratable }
+                                .map { |collaboratorship| collaboratorship.collaboratable }
       end
     end
 

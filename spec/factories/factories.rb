@@ -11,6 +11,10 @@ FactoryGirl.define do
     description "A very good project"
   end
 
+  factory :workspace do
+    name "The first workspace"
+  end
+
   factory :collaboratorship do
     trait :collaborator_user do
       association :collaborator, factory: :user
