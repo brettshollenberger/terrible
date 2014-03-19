@@ -1,13 +1,6 @@
 module Api
   module V1
-    class ProjectsController < ApplicationController
-      before_filter :authenticate_user!
-      respond_to :json
-
-      def index
-        respond_with(current_user.projects)
-      end
-
+    class ProjectsController < ApiController
       def show
         @project = current_user.projects.where(id: params[:id]).first
         if @project

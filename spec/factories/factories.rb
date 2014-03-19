@@ -1,4 +1,5 @@
 FactoryGirl.define do
+
   factory :user do
     sequence(:email) { |n| "yoda#{n}@dagobah.com" }
     first "Yoda"
@@ -22,6 +23,10 @@ FactoryGirl.define do
 
     trait :collaboratable_project do
       association :collaboratable, factory: :project
+    end
+
+    trait :collaboratable_workspace do
+      association :collaboratable, factory: :workspace
     end
 
     trait :active do
@@ -49,6 +54,11 @@ FactoryGirl.define do
                                                   :collaboratable_project,
                                                   :active,
                                                   :collaborator]
+
+    factory :user_workspace_collaboration, traits: [:collaborator_user, 
+                                                    :collaboratable_workspace,
+                                                    :active,
+                                                    :collaborator]
 
     factory :pending_user_project_collaboration, traits: [:collaborator_user, 
                                                           :collaboratable_project,
