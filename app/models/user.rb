@@ -15,4 +15,9 @@ class User < ActiveRecord::Base
     through: :collaboratorships,
     source: :collaboratable,
     source_type: "Project"
+
+  has_many :workspaces,
+    through: :collaboratorships,
+    source: :collaboratable,
+    source_type: "Workspace"
 end

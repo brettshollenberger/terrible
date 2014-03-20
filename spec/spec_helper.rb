@@ -41,4 +41,5 @@ RSpec.configure do |config|
   config.order = "random"
 
   config.include Requests::JsonHelpers, type: :request
+  config.include FactoriesHelpers
 end
