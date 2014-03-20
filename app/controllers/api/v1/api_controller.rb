@@ -4,6 +4,38 @@ module Api
       before_filter :authenticate_user!
       respond_to :json
 
+      # Without any query params, the index action returns all resources for a given user.
+      #
+      # The index action also allows several types of queries into the database:
+      # 
+      # Exact queries:
+      #   /projects?title=The Best Project&description=Very good
+      #
+      # This query will return any projects that match the search parameters exactly.
+      #
+      # Fuzzy searches:
+      #   /projects?title=project&fuzzy=true
+      #
+      # This query will return any projects that contain the word "project" in the title. An AJAX search bar might employ
+      # this type of query. This query is case-insensitive, and would match:
+      #
+      #   Project 1
+      #   The Best PROJECT
+      #   project morpheus
+      #
+      # Etc.
+      #
+      # Searches across any queryable attribute:
+      #   /projects?any=project&fuzzy=true
+      # 
+      # This query will return any project that contains the word "project" in the title or description (assuming title
+      # and description are the queryable attributes). Queryable attributes should be defined in each model's controller
+      # in order to provide this behavior.
+      #
+      # Search bars may also provide this functionality to allow a user to find exactly what they're looking for without
+      # searching the correct field. This action can potentially be resource intensive.
+      #
+      # ###############################################################################################################
       def index
         rescue_401_or_404 { respond_with(user_resources.where(build_query)) }
       end
@@ -52,20 +84,38 @@ module Api
         end
       end
 
+      def build_query
+        query = [""]
+        queryable_entity.each do |key, value|
+          add_sql_statement(query, key, value) if queryable?(key)
+        end
+        query
+      end
+
+      def queryable_entity
+        params[:any] ? queryable_keys : params
+      end
+
+      def add_sql_statement(query, key, value)
+        compound_sql_statement(query)
+        add_sql_condition(query, key)
+        add_sql_predicate(query, value)
+      end
+
       def queryable?(key)
         queryable_keys.include?(key.to_sym)
       end
 
-      def build_query
-        query = [""]
-        (params[:any] ? queryable_keys : params).each do |key, value|
-          if queryable?(key)
-            query[0] += (params[:any] ? " OR " : " AND ") if query[0].length > 0
-            query[0] += (fuzzy? ? "#{key} ILIKE ?" : "#{key} = ?")
-            query.push(params[:any] ? build_search_term(params[:any]) : build_search_term(value))
-          end
-        end
-        query
+      def compound_sql_statement(query)
+        query[0] += (params[:any] ? " OR " : " AND ") if query[0].length > 0
+      end
+
+      def add_sql_condition(query, key)
+        query[0] += (fuzzy? ? "#{key} ILIKE ?" : "#{key} = ?")
+      end
+
+      def add_sql_predicate(query, value)
+        query.push(params[:any] ? build_search_term(params[:any]) : build_search_term(value))
       end
 
       def build_search_term(value)
