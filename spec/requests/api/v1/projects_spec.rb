@@ -331,22 +331,22 @@ describe "Projects API :" do
     end
   end
 
-  # describe "delete" do
-  #   describe "when logged in and able to delete the project" do
-  #     before(:each) do
-  #       @upc       = FactoryGirl.create(:user_project_collaboration, collaborator: user)
-  #       @project = @upc.collaboratable
-  #       login(user)
-  #       delete "/api/v1/projects/#{@project.id}.json"
-  #     end
+  describe "delete" do
+    describe "when logged in and able to delete the project" do
+      before(:each) do
+        @workspace = workspace_for_user(user)
+        @project   = project_in_workspace(@workspace)
+        login(user)
+        delete "/api/v1/workspaces/#{@workspace.id}/projects/#{@project.id}.json"
+      end
 
-  #     it "is a successful request" do
-  #       expect(response).to be_success
-  #     end
+      it "is a successful request" do
+        expect(response).to be_success
+      end
 
-  #     it "returns a message stating that the project has been removed" do
-  #       expect(json["message"]).to eql("Resource successfully deleted.")
-  #     end
-  #   end
-  # end
+      it "returns a message stating that the project has been removed" do
+        expect(json["message"]).to eql("Resource successfully deleted.")
+      end
+    end
+  end
 end

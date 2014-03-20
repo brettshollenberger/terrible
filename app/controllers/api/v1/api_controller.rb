@@ -26,14 +26,9 @@ module Api
       end
 
       def destroy
-        @resource = user_resources.where(id: params[:id]).first
-
-        if @resource && @resource.destroy
-          render :json => {success: true,
-                           message: "Resource successfully deleted.",
-                           status: "204"}
-        else
-          render not_permitted
+        rescue_401_or_404 do
+          @resource = user_resources.where(id: params[:id]).first
+          render resource_deleted? ? deleted : not_permitted
         end
       end
 
@@ -45,6 +40,7 @@ module Api
       # Will be passed in. If ActiveRecord::RecordNotFound is raised, then the resource may exist, but the current_user
       # may not be a collaborator on it. In that case, we check to see whether the resource exists at all. If it does,
       # we return 401 (Not Permitted), otherwise, we return 404 (Not Found).
+      # ###############################################################################################################
       def rescue_401_or_404(&block)
         begin
           block.call
@@ -134,12 +130,15 @@ module Api
       end
 
       def resource_created?
-        return @resource.save && @collaboratorship.save if creates_collaboratorship?
-        @resource.save
+        creates_collaboratorship? ? @resource.save && @collaboratorship.save : @resource.save
       end
 
       def resource_updated?
         @resource.update(resource_params)
+      end
+
+      def resource_deleted?
+        @resource && @resource.destroy
       end
 
       def not_permitted?
@@ -165,6 +164,12 @@ module Api
 
       def updated
         { :json => @resource, status: :accepted, location: resource_url(@resource) }
+      end
+
+      def deleted
+        { :json => {success: true,
+                    message: "Resource successfully deleted.",
+                    status: "204"} }
       end
 
       def unprocessable_entity
