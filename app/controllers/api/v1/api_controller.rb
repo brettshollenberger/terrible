@@ -5,7 +5,7 @@ module Api
       respond_to :json
 
       def index
-        rescue_401_or_404 { respond_with(user_resources) }
+        rescue_401_or_404 { respond_with(user_resources.where(build_query)) }
       end
 
       def show
@@ -27,7 +27,7 @@ module Api
 
       def destroy
         rescue_401_or_404 do
-          @resource = user_resources.where(id: params[:id]).first
+          @resource = user_resources.find(params[:id])
           render resource_deleted? ? deleted : not_permitted
         end
       end
@@ -50,6 +50,30 @@ module Api
         rescue NotPermitted
           render not_permitted and return
         end
+      end
+
+      def queryable?(key)
+        queryable_keys.include?(key.to_sym)
+      end
+
+      def build_query
+        query = [""]
+        (params[:any] ? queryable_keys : params).each do |key, value|
+          if queryable?(key)
+            query[0] += (params[:any] ? " OR " : " AND ") if query[0].length > 0
+            query[0] += (fuzzy? ? "#{key} ILIKE ?" : "#{key} = ?")
+            query.push(params[:any] ? build_search_term(params[:any]) : build_search_term(value))
+          end
+        end
+        query
+      end
+
+      def build_search_term(value)
+        fuzzy? ? "%#{value}%" : value
+      end
+
+      def fuzzy?
+        params[:fuzzy] != nil && params[:fuzzy].to_s != "false"
       end
 
       def parent_resource_id_name
@@ -138,7 +162,7 @@ module Api
       end
 
       def resource_deleted?
-        @resource && @resource.destroy
+        @resource.destroy
       end
 
       def not_permitted?
