@@ -1,7 +1,9 @@
-# This file should contain all the record creation needed to seed the database with its default values.
-# The data can then be loaded with the rake db:seed (or created alongside the db with db:setup).
-#
-# Examples:
-#
-#   cities = City.create([{ name: 'Chicago' }, { name: 'Copenhagen' }])
-#   Mayor.create(name: 'Emanuel', city: cities.first)
+@user = User.where(email: "yoda@dagobah.com").first
+
+if @user.nil?
+  @user      = User.create(email: "yoda@dagobah.com", first: "Yoda", last: "the Great One", password: "foobar16")
+  @workspace = Workspace.create(name: "The first workspace")
+  @uwc       = Collaboratorship.create(collaborator: @user, collaboratable: @workspace)
+  @project   = Project.create(title: "The first project", description: "A very good project", workspace: @workspace)
+  @upc       = Collaboratorship.create(collaborator: @user, collaboratable: @project)
+end

@@ -10,6 +10,7 @@ FactoryGirl.define do
   factory :project do
     title "The first project"
     description "A very good project"
+    association :workspace, factory: :workspace
   end
 
   factory :workspace do

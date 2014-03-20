@@ -15,6 +15,8 @@ class Project < ActiveRecord::Base
     source: :collaborator,
     source_type: "User"
 
+  belongs_to :workspace
+
   def defaults
     unless self.title.length > 0
       self.title = "Untitled Project"
