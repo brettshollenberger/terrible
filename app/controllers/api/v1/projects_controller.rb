@@ -6,6 +6,10 @@ module Api
       def project_params
         params.require(:project).permit(:title, :description)
       end
+
+      def queryable_keys
+        [:title, :description]
+      end
     end
   end
 end
