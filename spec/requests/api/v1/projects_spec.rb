@@ -62,6 +62,75 @@ describe "Projects API :" do
             expect(json[0]["title"]).to eql("Workspaced Project")
           end
         end
+
+        describe "When query params are passed :" do
+          before(:each) do
+            10.times { |n| project_in_workspace(@workspace) }
+            @p      = Project.last
+            @p.title = "The last project"
+            @p.save
+          end
+
+          describe "When the request does not fuzzy filter :" do
+            before(:each) do
+              get "/api/v1/workspaces/#{@workspace.id}/projects", {title: "The last project"}
+            end
+
+            it "It is a successful request" do
+              expect(response).to be_success
+            end
+
+            it "It responds with only the filtered workspaces that exactly match the query" do
+              expect(json.length).to eq(1)
+              expect(json[0]["title"]).to eq("The last project")
+            end
+          end
+
+          describe "When the request fuzzy filters :" do
+            before(:each) do
+              get "/api/v1/workspaces/#{@workspace.id}/projects", {name: "project", fuzzy: true}
+            end
+
+            it "It is a successful request" do
+              expect(response).to be_success
+            end
+
+            it "It responds with only the filtered workspaces that match the fuzzy request" do
+              expect(json.length).to eq(11)
+              expect(json[0]["title"]).to eq("Workspaced Project")
+            end
+          end
+
+          describe "When the request may match any queryable parameter :" do
+            before(:each) do
+              get "/api/v1/workspaces/#{@workspace.id}/projects", {any: "The last project"}
+            end
+
+            it "It is a successful request" do
+              expect(response).to be_success
+            end
+
+            it "It responds with only the filtered workspaces that match the request" do
+              expect(json.length).to eq(1)
+              expect(json[0]["title"]).to eq("The last project")
+            end
+          end
+
+          describe "When the request may match any queryable parameter and is fuzzy :" do
+            before(:each) do
+              get "/api/v1/workspaces/#{@workspace.id}/projects", {any: "project", fuzzy: true}
+            end
+
+            it "It is a successful request" do
+              expect(response).to be_success
+            end
+
+            it "It responds with only the filtered workspaces that match the request" do
+              expect(json.length).to eq(11)
+              expect(json[0]["title"]).to eq("Workspaced Project")
+            end
+          end
+        end
       end
     end
 
