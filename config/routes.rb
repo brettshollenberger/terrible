@@ -6,6 +6,8 @@ TerribleTracker::Application.routes.draw do
       resources :workspaces do
         resources :projects
       end
+
+      resources :projects, only: [:index, :show]
     end
   end
 end

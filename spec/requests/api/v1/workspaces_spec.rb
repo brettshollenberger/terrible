@@ -1,130 +1,105 @@
 require 'spec_helper'
 
-describe "Workspaces API" do
+describe "Workspaces API :" do
 
-  describe "index" do
-    before(:each) do
-      FactoryGirl.create_list(:workspace, 10)
-    end
+  before(:each) do
+    FactoryGirl.create_list(:workspace, 10)
+    @workspace        = workspace_for_user(user)
+    @random_workspace = FactoryGirl.create(:workspace)
+  end
 
-    describe "when not logged in" do
+  describe "Index Action :" do
+    describe "When not logged in :" do
       before(:each) do
-        get "/api/v1/workspaces.json"
+        get api_v1_workspaces_path
       end
 
-      it "is not a successful request" do
+      it "It is not a successful request" do
         expect(response).to_not be_success
       end
 
-      it "responds with an error message" do
+      it "It responds with an error message" do
         expect(json["error"]).to eq("You need to sign in or sign up before continuing.")
       end
     end
 
-    describe "when logged in" do
+    describe "When logged in :" do
       before(:each) do
-        FactoryGirl.create(:user_workspace_collaboration, collaborator: user)
         login(user)
-        get "/api/v1/workspaces.json"
+        get api_v1_workspaces_path
       end
 
-      it "is a successful request" do
+      it "It is a successful request" do
         expect(response).to be_success
       end
 
-      it "responds with a list of workspaces the user collaborates on" do
+      it "It responds with a list of workspaces that the user collaborates on" do
         expect(json.length).to eq(1)
+        expect(json[0]["name"]).to eq(@workspace.name)
       end
     end
   end
 
-  describe "show" do
-    describe "when logged in and able to view the workspace" do
+  describe "Show Action :" do
+    describe "When not logged in :" do
       before(:each) do
-        @uwc       = FactoryGirl.create(:user_workspace_collaboration, collaborator: user)
-        @workspace = @uwc.collaboratable
-        login(user)
-        get "/api/v1/workspaces/#{@workspace.id}.json"
+        get api_v1_workspace_path(@workspace)
       end
 
-      it "is a successful request" do
-        expect(response).to be_success
-      end
-
-      it "responds with the user's workspace, provided they are a collaborator" do
-        expect(json["name"]).to eql(@workspace.name)
-      end
-    end
-
-    describe "when logged in and not able to view the workspace" do
-      before(:each) do
-        @uwc       = FactoryGirl.create(:user_workspace_collaboration)
-        @workspace = @uwc.collaboratable
-        login(user)
-        get "/api/v1/workspaces/#{@workspace.id}.json"
-      end
-
-      it "is not a successful request" do
+      it "It is not a successful request" do
         expect(response).to_not be_success
       end
 
-      it "returns an error message" do
-        expect(json["message"]).to eql("You don't have permission to view that resource")
-      end
-    end
-  end
-
-  describe "create" do
-    before(:each) do
-      def valid_workspace
-        { :format => :json, :workspace => { :name => "The Best Workspace" } }
-      end
-
-      def workspace_create_endpoint
-        "/api/v1/workspaces.json"
-      end
-
-      def create_workspace(workspace)
-        post workspace_create_endpoint, workspace
+      it "It responds with an error message" do
+        expect(json["error"]).to eq("You need to sign in or sign up before continuing.")
       end
     end
 
-    describe "when logged in" do
+    describe "When logged in :" do
       before(:each) do
         login(user)
       end
 
-      describe "when creating a valid workspace" do
+      describe "When the user may view the workspace :" do
         before(:each) do
-          create_workspace(valid_workspace)
-          @workspace = Workspace.find(json["id"])
+          get api_v1_workspace_path(@workspace)
         end
 
-        it "is a successful request" do
+        it "It is a successful request" do
           expect(response).to be_success
         end
 
-        it "renders the workspace" do
-          expect(json["name"]).to eql("The Best Workspace")
+        it "It responds with the user's workspace, provided they are a collaborator" do
+          expect(json["name"]).to eql(@workspace.name)
+        end
+      end
+
+      describe "When the user may not view the workspace :" do
+        before(:each) do
+          get api_v1_workspace_path(@random_workspace)
         end
 
-        it "creates a collaboratorship between user and workspace" do
-          expect(user.workspaces[0]).to eql(@workspace)
+        it "It is not a successful request" do
+          expect(response).to_not be_success
         end
 
-        it "creates an active collaboratorship" do
-          expect(user.collaboratorship_for(@workspace).state).to eql("active")
-        end
-
-        it "makes the user the owner" do
-          expect(user.role_for(@workspace)).to eql("owner")
+        it "It returns an error message" do
+          expect(json["error"]).to eql("You don't have permission to view or modify that resource")
         end
       end
     end
+  end
 
-    describe "when not logged in" do
+  describe "Create Action :" do
+    before(:each) do
+      def valid_workspace_json
+        { :format => :json, :workspace => { :name => "The Best Workspace" } }
+      end
+    end
+
+    describe "When not logged in :" do
       before(:each) do
-        create_workspace(valid_workspace)
+        post api_v1_workspaces_path(valid_workspace_json)
       end
 
       it "is not a successful request" do
@@ -135,86 +110,160 @@ describe "Workspaces API" do
         expect(json["error"]).to eql("You need to sign in or sign up before continuing.")
       end
     end
-  end
 
-  describe "update" do
-    before(:each) do
-      @uwc       = FactoryGirl.create(:user_workspace_collaboration, collaborator: user)
-      @user2     = FactoryGirl.create(:user)
-      @workspace = @uwc.collaboratable
-      login(user)
-
-      def workspace_json
-        { :format => :json, :workspace => { :name => "Updated" } }
+    describe "When logged in :" do
+      before(:each) do
+        login(user)
       end
 
-      def workspace_update_endpoint
-        "/api/v1/workspaces/#{@workspace.id}.json"
-      end
-
-      def update_workspace(workspace)
-        put workspace_update_endpoint, workspace
-      end
-    end
-
-    describe "when logged in" do
-      describe "as a workspace collaborator" do
+      describe "If I create a valid workspace :" do
         before(:each) do
-          update_workspace(workspace_json)
+          post api_v1_workspaces_path(valid_workspace_json)
+          @recently_created_workspace = Workspace.find(json["id"])
         end
 
-        it "is a successful request" do
+        it "It is a successful request" do
           expect(response).to be_success
         end
 
-        it "renders the updated workspace" do
+        it "It renders the recently created workspace" do
+          expect(json["name"]).to eql("The Best Workspace")
+        end
+
+        it "It creates a collaboratorship between user and recently created workspace" do
+          expect(user.workspaces.last).to eql(@recently_created_workspace)
+        end
+
+        it "It creates an active collaboratorship" do
+          expect(user.collaboratorship_for(@recently_created_workspace).state).to eql("active")
+        end
+
+        it "It makes the user the owner" do
+          expect(user.role_for(@recently_created_workspace)).to eql("owner")
+        end
+      end
+    end
+  end
+
+  describe "Update Action :" do
+    before(:each) do
+      def update_workspace_json
+        { :format => :json, :workspace => { :name => "Updated" } }
+      end
+    end
+
+    describe "When not logged in :" do
+      before(:each) do
+        put api_v1_workspace_path(@workspace, update_workspace_json)
+      end
+
+      it "It is not successful" do
+        expect(response).to_not be_success
+      end
+
+      it "It renders the login message" do
+        expect(json["error"]).to eql("You need to sign in or sign up before continuing.")
+      end
+    end
+
+    describe "When logged in :" do
+      before(:each) do
+        login(user)
+      end
+
+      describe "As a workspace collaborator :" do
+        before(:each) do
+          put api_v1_workspace_path(@workspace, update_workspace_json)
+        end
+
+        it "It is a successful request" do
+          expect(response).to be_success
+        end
+
+        it "It renders the updated workspace" do
           expect(json["name"]).to eql("Updated")
         end
       end
 
-      describe "as a non-collaborator" do
+      describe "As a non-collaborator on the workspace :" do
         before(:each) do
-          logout
+          @user2 = FactoryGirl.create(:user)
           login(@user2)
-          update_workspace(workspace_json)
+          put api_v1_workspace_path(@workspace, update_workspace_json)
         end
 
-        it "is not a successful request" do
+        it "It is not a successful request" do
           expect(response).to_not be_success
         end
 
-        it "returns status 401" do
+        it "It returns status 401" do
           expect(json["status"]).to eql("401")
         end
       end
 
-      describe "when the workspace doesn't exist" do
+      describe "When the workspace doesn't exist :" do
         before(:each) do
-          put "/api/v1/workspaces/not-an-id.json", workspace_json
+          put "/api/v1/workspaces/not-an-id.json", update_workspace_json
+        end
+
+        it "It is not a successful request" do
+          expect(response).to_not be_success
+        end
+
+        it "It returns status 404" do
+          expect(json["status"]).to eql("404")
+        end
+      end
+    end
+  end
+
+  describe "Delete Action :" do
+
+    describe "When not logged in :" do
+      before(:each) do
+        delete api_v1_workspace_path(@workspace)
+      end
+
+      it "It is not successful" do
+        expect(response).to_not be_success
+      end
+
+      it "It renders the login message" do
+        expect(json["error"]).to eql("You need to sign in or sign up before continuing.")
+      end
+    end
+
+    describe "When logged in :" do
+      before(:each) do
+        login(user)
+      end
+
+      describe "When the user may delete the workspace :" do
+        before(:each) do
+          delete api_v1_workspace_path(@workspace)
+        end
+
+        it "is a successful request" do
+          expect(response).to be_success
+        end
+
+        it "returns a message stating that the workspace has been removed" do
+          expect(json["message"]).to eql("Resource successfully deleted.")
+        end
+      end
+
+      describe "When the user may not delete the workspace :" do
+        before(:each) do
+          delete api_v1_workspace_path(@random_workspace)
         end
 
         it "is not a successful request" do
           expect(response).to_not be_success
         end
 
-        it "returns status 404" do
-          expect(json["status"]).to eql("404")
+        it "returns a message stating the not permitted error" do
+          expect(json["error"]).to eql("You don't have permission to view or modify that resource")
         end
-      end
-    end
-
-    describe "when not logged in" do
-      before(:each) do
-        logout
-        update_workspace(workspace_json)
-      end
-
-      it "is not successful" do
-        expect(response).to_not be_success
-      end
-
-      it "renders the login message" do
-        expect(json["error"]).to eql("You need to sign in or sign up before continuing.")
       end
     end
   end

@@ -5,31 +5,23 @@ module Api
       respond_to :json
 
       def index
-        rescue_find_by_user { respond_with(user_resources) }
+        rescue_401_or_404 { respond_with(user_resources) }
       end
 
       def show
-        rescue_find_by_user { respond_with(user_resource) } 
+        rescue_401_or_404 { respond_with(user_resource) } 
       end
 
       def create
         @resource = user_resources.new(resource_params)
-
         create_collaboratorship if creates_collaboratorship?
-
-        if resource_created?
-          render created
-        else
-          render unprocessable_entity
-        end
+        render resource_created? ? created : unprocessable_entity
       end
 
       def update
-        rescue_find_by_user do 
+        rescue_401_or_404 do 
           @resource = user_resources.find(params[:id])
-          if @resource.update(resource_params)
-            render :json => @resource, status: :accepted, location: resource_url(@resource)
-          end
+          render resource_updated? ? updated : unprocessable_entity
         end
       end
 
@@ -53,12 +45,12 @@ module Api
       # Will be passed in. If ActiveRecord::RecordNotFound is raised, then the resource may exist, but the current_user
       # may not be a collaborator on it. In that case, we check to see whether the resource exists at all. If it does,
       # we return 401 (Not Permitted), otherwise, we return 404 (Not Found).
-      def rescue_find_by_user(&block)
+      def rescue_401_or_404(&block)
         begin
           block.call
         rescue ActiveRecord::RecordNotFound
           render not_found and return unless not_permitted?
-          rescue_find_by_user { raise NotPermitted }
+          rescue_401_or_404 { raise NotPermitted }
         rescue NotPermitted
           render not_permitted and return
         end
@@ -146,6 +138,10 @@ module Api
         @resource.save
       end
 
+      def resource_updated?
+        @resource.update(resource_params)
+      end
+
       def not_permitted?
         resource.where(id: params[:id]).first
       end
@@ -165,6 +161,10 @@ module Api
 
       def created
         { :json => @resource, status: :created, location: resource_url(@resource) }
+      end
+
+      def updated
+        { :json => @resource, status: :accepted, location: resource_url(@resource) }
       end
 
       def unprocessable_entity
